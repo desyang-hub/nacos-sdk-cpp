@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "UdpNamingServiceListener.h"
 #include "src/config/AppConfigManager.h"
@@ -31,10 +32,34 @@ void UdpNamingServiceListener::initializeUdpListener() NACOS_THROW(NacosExceptio
     log_debug("udp receiver port = %d\n", cliaddr.sin_port);
 
     // Bind the socket with the server address
-    if ( ::bind(sockfd, (const struct sockaddr *)&cliaddr,
-              sizeof(cliaddr)) < 0 )
-    {
-        throw NacosException(NacosException::UNABLE_TO_CREATE_SOCKET, "Unable to bind");
+    // If the configured port is already in use (e.g., another nacos instance),
+    // try a random port to avoid "Unable to bind" exception that would crash the program
+    if ( ::bind(sockfd, (const struct sockaddr *)&cliaddr, sizeof(cliaddr)) < 0 ) {
+        if (errno == EADDRINUSE) {
+            // Port already in use - this is common when running multiple instances on the same machine.
+            // Try to bind to a random port instead.
+            srand(time(NULL) ^ getpid());
+            int randomPort = 30620 + (rand() % 1000);
+            cliaddr.sin_port = htons(randomPort);
+            log_warn("[UdpNamingServiceListener] Configured port %d is in use, trying random port %d\n",
+                     udpReceiverPort, randomPort);
+            if (::bind(sockfd, (const struct sockaddr *)&cliaddr, sizeof(cliaddr)) < 0) {
+                // Final fallback attempt - use port 0 (OS assigns available port)
+                cliaddr.sin_port = 0;
+                log_warn("[UdpNamingServiceListener] Failed to bind random port, using OS-assigned port\n");
+                if (::bind(sockfd, (const struct sockaddr *)&cliaddr, sizeof(cliaddr)) < 0) {
+                    close(sockfd);
+                    sockfd = -1;
+                    log_error("[UdpNamingServiceListener] Unable to create UDP socket: %s\n", strerror(errno));
+                    return;
+                }
+            }
+            udpReceiverPort = ntohs(cliaddr.sin_port);
+            log_info("[UdpNamingServiceListener] Socket bound to port %d, udpReceiverPort updated to %d\n",
+                     udpReceiverPort, udpReceiverPort);
+        } else {
+            throw NacosException(NacosException::UNABLE_TO_CREATE_SOCKET, strerror(errno));
+        }
     }
 
     log_debug("socket bound\n");
@@ -86,6 +111,10 @@ void *UdpNamingServiceListener::listenerThreadFunc(void *param) {
     UdpNamingServiceListener *thisObj = (UdpNamingServiceListener*)param;
     log_debug("in thread UdpNamingServiceListener::listenerThreadFunc()\n");
     thisObj->initializeUdpListener();
+    if (thisObj->sockfd < 0) {
+        log_error("[UdpNamingServiceListener] Failed to initialize UDP listener, cannot start listening\n");
+        return NULL;
+    }
     while (thisObj->_started) {
         int ret;//also data_len
 
