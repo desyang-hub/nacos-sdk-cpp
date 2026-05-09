@@ -61,7 +61,7 @@ bool ConcurrentDiskUtil::writeFileContent
         //TODO:add errorcode
         throw IOException(NacosException::UNABLE_TO_OPEN_FILE, errbuf);
     }
-    flock(fileno(fp), LOCK_SH);
+    flock(fileno(fp), LOCK_EX);
     fwrite(content.c_str(), content.size(), 1, fp);
     flock(fileno(fp), LOCK_UN);
     fclose(fp);
