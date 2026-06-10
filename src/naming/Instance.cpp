@@ -27,19 +27,19 @@ NacosString Instance::toInetAddr() {
     return  ip + ":" + NacosStringOps::valueOf(port);
 }
 
-Instance & Instance::operator = (const Instance &rhs)
-{
-    this->instanceId = rhs.instanceId;
-    this->ip = rhs.ip;
-    this->port = rhs.port;
-    this->weight = rhs.weight;
-    this->healthy = rhs.healthy;
-    this->enabled = rhs.enabled;
-    this->ephemeral = rhs.ephemeral;
-    this->clusterName = rhs.clusterName;
-    this->metadata = rhs.metadata;
-    return *this;
-}
+// Instance & Instance::operator = (const Instance &rhs)
+// {
+//     this->instanceId = rhs.instanceId;
+//     this->ip = rhs.ip;
+//     this->port = rhs.port;
+//     this->weight = rhs.weight;
+//     this->healthy = rhs.healthy;
+//     this->enabled = rhs.enabled;
+//     this->ephemeral = rhs.ephemeral;
+//     this->clusterName = rhs.clusterName;
+//     this->metadata = rhs.metadata;
+//     return *this;
+// }
 
 bool Instance::operator != (const Instance &rhs) const
 {

@@ -10,10 +10,13 @@ namespace nacos{
 class Instance {
 public:
     Instance & operator = (const Instance &rhs);
+    Instance & operator = (Instance &&rhs) = default;
     bool operator == (const Instance &rhs) const;
     bool operator != (const Instance &rhs) const;
 
     Instance();
+    Instance(const Instance&) = default;
+    Instance(Instance&&) = default;
 
     /**
     * unique id of this instance.
