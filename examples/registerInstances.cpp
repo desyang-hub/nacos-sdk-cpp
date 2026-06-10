@@ -5,7 +5,8 @@
 using namespace std;
 using namespace nacos;
 
-int main() {
+
+int main(int argc, char const *argv[]) {
     Properties configProps;
     configProps[PropertyKeyConst::SERVER_ADDR] = "127.0.0.1";
     INacosServiceFactory *factory = NacosFactoryFactory::getNacosFactory(configProps);
@@ -19,10 +20,16 @@ int main() {
     instance.instanceId = "1";
     instance.ephemeral = true;
 
+
+    std::string service_name = "TestNamingService";
+    if (argc > 1) {
+        service_name = argv[1];
+    }
+
     //Registers 5 services named TestNamingService1...5
     try {
         for (int i = 0; i < 5; i++) {
-            NacosString serviceName = "TestNamingService" + NacosStringOps::valueOf(i);
+            NacosString serviceName = service_name + NacosStringOps::valueOf(i);
             instance.port = 2000 + i;
             namingSvc->registerInstance(serviceName, instance);
         }

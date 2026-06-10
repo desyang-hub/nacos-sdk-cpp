@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.4.1)
 
-project(nacos-sdk-cpp)
+project(nacos-sdk-cpp VERSION 1.1.3)
 
 #add_definitions(-DNACOS_AUTH)
 #add_definitions(-DNACOS_SPAS)
@@ -46,12 +46,16 @@ aux_source_directory(test TEST_SRCS_DIRS)
 aux_source_directory(test/testcase TEST_SRCS_DIRS)
 
 add_executable(nacos-cli.out ${TEST_SRCS_DIRS} ${SRCS_DIRS})
-add_library(nacos-cli SHARED ${SRCS_DIRS})
-add_library(nacos-cli-static STATIC ${SRCS_DIRS})
+
+# BUILD_SHARED_LIBS 控制SHARED STATIC
+add_library(nacos-cli "" ${SRCS_DIRS})
+add_library(nacos::nacos-cli ALIAS nacos-cli)  # 👈 添加这一行
+# add_library(nacos-cli SHARED ${SRCS_DIRS})
+# add_library(nacos-cli-static STATIC ${SRCS_DIRS})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_link_libraries(nacos-cli PRIVATE Threads::Threads curl z)
-target_link_libraries(nacos-cli-static PRIVATE Threads::Threads curl z)
+# target_link_libraries(nacos-cli-static PRIVATE Threads::Threads curl z)
 target_link_libraries(nacos-cli.out PRIVATE Threads::Threads curl z)
 find_package(Threads REQUIRED)
 find_package(CURL REQUIRED)
@@ -60,6 +64,10 @@ find_package(ZLIB REQUIRED)
 install(TARGETS nacos-cli
 		LIBRARY DESTINATION lib)
 
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
 		DESTINATION include/nacos
 		FILES_MATCHING PATTERN "*.h*")
+
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nacosInstall.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nacosVersionConfig.cmake)

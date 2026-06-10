@@ -9,7 +9,7 @@ namespace nacos{
 //a service instance
 class Instance {
 public:
-    Instance & operator = (const Instance &rhs);
+    Instance & operator = (const Instance &rhs) = default;
     Instance & operator = (Instance &&rhs) = default;
     bool operator == (const Instance &rhs) const;
     bool operator != (const Instance &rhs) const;
